@@ -29,7 +29,87 @@
 
 ## 🗺️ UML Class Diagram
 
-![UML Class Diagram](docs/uml_diagram.svg)
+```mermaid
+classDiagram
+
+    %% ─── SOUND ABSTRACTION (DIP) ──────────────────────────────────
+    class SoundEvent {
+        <<enumeration>>
+        CellRevealed
+        MineHit
+        FlagPlaced
+        FlagRemoved
+    }
+
+    class SoundCallback {
+        <<interface>>
+        +operator()(event: SoundEvent) void
+    }
+
+    %% ─── CORE CLASSES ─────────────────────────────────────────────
+    class Board {
+        -cells: Cell[TOTAL_ROWS][TOTAL_COLS]
+        -onSound: SoundCallback
+        +initialize() void
+        +revealCell(row: int, col: int) void
+        +toggleFlag(row: int, col: int) void
+        +isMine(row: int, col: int) bool
+        +isRevealed(row: int, col: int) bool
+        +isFlagged(row: int, col: int) bool
+        +getAdjacentMines(row: int, col: int) int
+        +setSoundCallback(cb: SoundCallback) void
+        -placeMines() void
+        -floodFill(row: int, col: int) void
+        -countAdjacent() void
+    }
+
+    class Game {
+        -board: Board
+        -won: bool
+        -over: bool
+        -sounds: Sound[]
+        +Game()
+        +handleInput() void
+        +update() void
+        +isWon() bool
+        +isOver() bool
+        +getBoard() Board&
+        -playSound(event: SoundEvent) void
+        -checkWin() void
+    }
+
+    class main {
+        <<entry point>>
+        +main() int
+    }
+
+    %% ─── CONSTANTS (OCP) ──────────────────────────────────────────
+    class BoardConfig {
+        <<constants>>
+        +TOTAL_ROWS: int = 16
+        +TOTAL_COLS: int = 16
+        +TOTAL_MINES: int = 40
+    }
+
+    %% ─── RELATIONSHIPS ────────────────────────────────────────────
+
+    %% Composition — Game owns Board (LSP / composition over inheritance)
+    Game *-- Board : owns
+
+    %% DIP — Board depends only on the SoundCallback abstraction
+    Board --> SoundCallback : invokes
+    Board --> SoundEvent    : fires
+
+    %% Game provides the concrete sound implementation via lambda
+    Game --> SoundCallback  : registers
+    Game --> SoundEvent     : handles
+
+    %% main.cpp drives Game through its public interface only (ISP)
+    main --> Game : constructs & calls
+
+    %% Board is configured via constexpr constants (OCP)
+    Board ..> BoardConfig : configured by
+```
 
 ---
 
